@@ -14,7 +14,10 @@ kubectl apply -f metallb-config.yaml
 
 This will setup load balancer and give it an app pool from 192.168.1.200 - 192.168.1.254. Please note that you should limit your DHCP not to use this range.
 
-Pi-hole and cloudflared will be installed by running:
+Pi-hole and cloudflared will be installed by running. But before that change admin password by modifying 
+        - name: WEBPASSWORD
+          value: admin
+in deploy-pihole-cloudflared-fixed.yaml. You can now continue installation and run:
 kubectl apply -f deploy-pihole-cloudflared-fixed.yaml
 
 After execution you would need to check at what address was assigned to cloudflared service by running:
@@ -27,4 +30,4 @@ value: 192.168.1.200 # MODIFY THIS TO YOUR PIHOLE-UDP SVC IP
 After that apply updates by running again
 kubectl apply -f deploy-pihole-cloudflared-fixed.yaml
 
-Fixing IP address like this is far from ideal, but it did exist in original solution, and I didn't have the time to spend to deal with it so contributions are welcome :)
+Fixing IP address like this is far from ideal, but it did exist in original solution, and I didn't have the time to spend to deal with it so contributors are welcome :)
