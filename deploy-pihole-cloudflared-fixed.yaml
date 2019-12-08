@@ -1,0 +1,194 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pihole-dns
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pihole
+  name: pihole
+  namespace: pihole-dns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pihole
+  template:
+    metadata:
+      labels:
+        app: pihole
+    spec:
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 127.0.0.1
+          - 1.1.1.1
+      containers:
+      - image: visibilityspots/cloudflared
+        imagePullPolicy: IfNotPresent
+        name: cloudflared
+        ports:
+        - containerPort: 53 # for DNS
+          name: dns
+          protocol: TCP
+        - containerPort: 67 # for DHCP
+          name: dns-udp
+          protocol: UDP
+        env:
+        - name: TUNNEL_METRICS
+          value: 127.0.0.1:3000
+      - env:
+        - name: TZ
+          value: "Europe/Paris"
+        - name: WEBPASSWORD
+          value: admin
+        - name: ServerIP
+          value: 192.168.1.200 # MODIFY THIS TO YOUR PIHOLE-UDP SVC IP
+        - name: DNS1
+          value: 127.0.0.1
+        - name: DNS2
+          value: 127.0.0.1
+        image: pihole/pihole:latest
+        imagePullPolicy: IfNotPresent
+        name: pihole
+        ports:
+        - containerPort: 80
+          name: pihole-http
+          protocol: TCP
+        - containerPort: 53
+          name: dns
+          protocol: TCP
+        - containerPort: 53
+          name: dns-udp
+          protocol: UDP
+        - containerPort: 443
+          name: pihole-ssl
+          protocol: TCP
+        - containerPort: 67
+          name: client-udp
+          protocol: UDP
+        volumeMounts:
+        - mountPath: /etc/dnsmasq.d/02-custom.conf
+          name: pihole-custom-dnsmasq
+          subPath: 02-custom.conf
+        - name: pihole-adlists
+          mountPath: /etc/pihole/adlists.list
+          subPath: adlists.list
+        - name: pihole-regex
+          mountPath: /etc/pihole/regex.list
+          subPath: regex.list
+        securityContext:
+          capabilities:        
+            add:
+              - NET_ADMIN  
+      restartPolicy: Always
+      volumes:
+        - name: pihole-adlists
+          configMap:
+            name: pihole-adlists
+        - name: pihole-regex
+          configMap: 
+            name: pihole-regex
+        - name: pihole-custom-dnsmasq
+          configMap:
+            defaultMode: 420
+            name: pihole-custom-dnsmasq
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pihole-custom-dnsmasq
+  namespace: pihole-dns
+data:
+  02-custom.conf: |
+#    address=/foo.bar.com/192.168.1.29 #To specify custom DNS resolutions
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pihole-adlists
+  namespace: pihole-dns
+data:
+  adlists.list: |
+    https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+    https://mirror1.malwaredomains.com/files/justdomains
+    http://sysctl.org/cameleon/hosts
+    https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt
+    https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt
+    https://hosts-file.net/ad_servers.txt
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pihole-regex
+  namespace: pihole-dns
+data:
+  regex.list: |
+    ^(.+[-_.])??adse?rv(er?|ice)?s?[0-9]*[-.]
+    ^(.+[-_.])??m?ad[sxv]?[0-9]*[-_.]
+    ^(.+[-_.])??telemetry[-.]
+    ^(.+[-_.])??xn--
+    ^adim(age|g)s?[0-9]*[-_.]
+    ^adtrack(er|ing)?[0-9]*[-.]
+    ^advert(s|is(ing|ements?))?[0-9]*[-_.]
+    ^aff(iliat(es?|ion))?[-.]
+    ^analytics?[-.]
+    ^banners?[-.]
+    ^beacons?[0-9]*[-.]
+    ^count(ers?)?[0-9]*[-.]
+    ^pixels?[-.]
+    ^stat(s|istics)?[0-9]*[-.]
+    ^track(ers?|ing)?[0-9]*[-.]
+    ^traff(ic)?[-.]
+    ^(.*)\.g00\.(.*)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pihole
+  name: pihole-udp
+  namespace: pihole-dns 
+spec:
+  ports:
+  - name: dns-udp
+    port: 53
+    protocol: UDP
+    #Per definition of container visibilityspots/cloudflared cloudflared runs on port 54
+    targetPort: 54 # Redirecting DNS traffic from port 53 to coudflared service port 54
+  - name: client-udp
+    port: 67  #DHCP port
+    protocol: UDP
+    targetPort: 67 #DHCP port
+  selector:
+    app: pihole
+  sessionAffinity: None
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pihole
+  name: pihole
+  namespace: pihole-dns 
+spec:
+  ports:
+  - name: pihole-http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  - name: pihole-https
+    port: 443
+    protocol: TCP
+    targetPort: 443
+  - name: dns
+    port: 53
+    protocol: TCP
+    targetPort: 53
+  selector:
+    app: pihole
+  sessionAffinity: None
+  type: LoadBalancer
