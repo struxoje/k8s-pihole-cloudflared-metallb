@@ -31,3 +31,10 @@ After that apply updates by running again
 kubectl apply -f deploy-pihole-cloudflared-fixed.yaml
 
 Fixing IP address like this is far from ideal, but it did exist in original solution, and I didn't have the time to spend to deal with it so contributors are welcome :)
+
+In order to be able to see proper Client IPs and not obscured IP by nodes, we need to set
+  externalTrafficPolicy: Local
+  
+As I was using WeaveNet I also had to set NO_MASQ_LOCAL=1 in order for previous policy to take effect by running
+kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')&env.NO_MASQ_LOCAL=1"
+
