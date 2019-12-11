@@ -164,6 +164,7 @@ spec:
   selector:
     app: pihole
   sessionAffinity: None
+  externalTrafficPolicy: Local
   type: LoadBalancer
 ---
 apiVersion: v1
@@ -190,4 +191,5 @@ spec:
   selector:
     app: pihole
   sessionAffinity: None
+  externalTrafficPolicy: Local
   type: LoadBalancer
