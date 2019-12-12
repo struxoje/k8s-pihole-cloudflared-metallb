@@ -45,7 +45,7 @@ spec:
         - name: WEBPASSWORD
           value: admin
         - name: ServerIP
-          value: 192.168.1.200 # MODIFY THIS TO YOUR PIHOLE-UDP SVC IP
+          value: 192.168.1.200
         - name: DNS1
           value: 127.0.0.1#54 # Cloudflared runs on port 54
         - name: DNS2
@@ -165,6 +165,7 @@ spec:
     app: pihole
   sessionAffinity: None
   externalTrafficPolicy: Local
+  loadBalancerIP: 192.168.1.200
   type: LoadBalancer
 ---
 apiVersion: v1
@@ -192,4 +193,5 @@ spec:
     app: pihole
   sessionAffinity: None
   externalTrafficPolicy: Local
+  loadBalancerIP: 192.168.1.201
   type: LoadBalancer
