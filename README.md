@@ -26,15 +26,9 @@ After execution you would need to check at what address was assigned to cloudfla
 
 `kubectl get svc -n pihole-dns`
 
-Look for external IP address of pihole-udp service and if needed change deploy-pihole-cloudflared-fixed.yaml
-and following line:           
-value: 192.168.1.200 # MODIFY THIS TO YOUR PIHOLE-UDP SVC IP
-
-After that apply updates by running again:
-
-`kubectl apply -f deploy-pihole-cloudflared-fixed.yaml`
-
-Fixing IP address like this is far from ideal, but it did exist in original solution, and I didn't have the time to spend to deal with it so contributors are welcome :)
+LoadBalancer is set to 192.168.1.200 for udp services and for 192.168.1.201 for tcp services
+You can access web app by going to http://192.168.1.201/admin
+And your DHCP sould point to 192.168.1.200
 
 In order to be able to see proper Client IPs and not obscured IP by nodes, we need to set
   externalTrafficPolicy: Local
