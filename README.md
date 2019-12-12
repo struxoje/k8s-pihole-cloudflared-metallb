@@ -26,14 +26,14 @@ After execution you would need to check at what address was assigned to cloudfla
 
 `kubectl get svc -n pihole-dns`
 
-LoadBalancer is set to 192.168.1.200 for udp services and for 192.168.1.201 for tcp services
-You can access web app by going to http://192.168.1.201/admin
-And your DHCP sould point to 192.168.1.200
-
 In order to be able to see proper Client IPs and not obscured IP by nodes, we need to set
   externalTrafficPolicy: Local
   
 As I was using WeaveNet I also had to set NO_MASQ_LOCAL=1 in order for previous policy to take effect by running:
 
 `kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')&env.NO_MASQ_LOCAL=1"`
+
+LoadBalancer is set to 192.168.1.200 for udp services and for 192.168.1.201 for tcp services
+You can access web app by going to http://192.168.1.201/admin
+And your DHCP sould point to 192.168.1.200
 
